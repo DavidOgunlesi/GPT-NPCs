@@ -122,12 +122,9 @@ class SpeechConstructionModule:
     def ConstructResponse(self, queries, originalInput, previousSentences, conversation = []):
         prompt =  f'''
         INSTRUCTIONS:
-        You are roleplaying as a character. Given the information from the queries, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.        
+        You are roleplaying as a character. Given the information from your thoughts, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.        
         Only construct the next sentence. Do not construct the entire response. Do this by predicting the next sentence from the previous sentences. If no previous sentences exist, construct the first sentence.
-        When you are finished predicting sentences (when it gets too long) say "NULL".
-
-        Previous Sentences Example: Who are you? I don't recognise you around these parts.
-        Output Example: Are you new here? NULL.
+        If your previous sentences make a complete answer/response, you should stop generating.
 
         Make it sound like a human.
         Speech Personality: {self.speech_personality}
@@ -135,29 +132,33 @@ class SpeechConstructionModule:
 
         DATA:
         Current Conversation History: {conversation}
-        Original Input: {originalInput}
+        Current Input to respond to: {originalInput}
         Your Previous Sentences: {"".join(previousSentences)}
-
         Your retrieved Thoughts: {queries}
 
-        INSTRUCTION: When you are finished predicting sentences (when it gets too long) say "NULL".
-        '''
-        # prompt = f'''
-        # Given the information from the queries, which have been retrieved from your thoughts and are about you or the world, construct an in-character response to the original input.
-        # Only construct the next sentence. Do not construct the entire response. Do this by predicting the next sentence from the previous sentences. If no previous sentences exist, construct the first sentence.
-        # When you are finished predicting sentences (when it gets too long) say "NULL".
-        # Original Input: {originalInput}
-        # Your Previous Sentences: {previousSentences}
-        # Queries: {queries}
-        
-        # Previous Sentences Example: Who are you? I don't recognise you around these parts.
-        # Output Example: Are you new here? NULL.
+        EXAMPLE: 
+        Current Conversation History: ["role": "system", "content": "You are under arrest!"]
+        Current Input to respond to: "You are under arrest!"
+        Your Previous Sentences: Who are you? I don't recognise you around these parts.
+        Your retrieved Thoughts: ["Do I know this person?", "Are they new here?"]
+        Output Example: Are you new here? NULL.
 
-        # Make it sound like a human.
-        # Speech Personality: {self.speech_personality}
-        # Do not say anything else. Only say the response. And only one sentence. Do not repeat things.
-        # '''
-        #print(prompt)
+        When you are finished predicting sentences say "NULL".
+        '''
+        prompt=f'''
+        INSTRUCTIONS:
+        You are roleplaying as a character. Given the information from your thoughts, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.
+        Make it sound like a human.
+        Speech Personality: {self.speech_personality}
+
+        DATA:
+        Current Conversation History: {conversation}
+
+        Your retrieved Thoughts: {queries}
+        '''
+        print("----------------------------------------")
+        print(prompt)
+        print("----------------------------------------")
         gpt = GPTInstance(prompt)
         return gpt.CreateChat(confirmString=None)
 

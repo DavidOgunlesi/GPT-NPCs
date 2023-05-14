@@ -4,7 +4,7 @@ print("Start")
 
 c = Character("Dane")
 
-idx = ChooseDeviceIndex()
+idx = 2#ChooseDeviceIndex()
 #audio_file_path = '1.mp3'
 while True:
     audio_file_name = StartRecording(idx) #open(audio_file_path, 'rb')
