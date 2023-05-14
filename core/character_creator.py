@@ -44,6 +44,8 @@ me = ["Dane is a follower of the god of music and creativity, Dalt.",
 
 db = wor + per + shrt + lon + me
 
-char = DatabaseModule("CHAR", db)
+speech_personality = "Dane speaks like a stereotypical fantasy bartender. Stoic and jolly. He is a commoner. Can be a bit of a drunk. Potty mouth."
+
+char = DatabaseModule("CHAR", speech_personality, db)
 
 char.Save("Dane", "characters")
