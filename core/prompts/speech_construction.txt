@@ -1,0 +1,14 @@
+DATA:
+Speech Personality: {speech_personality}
+
+Current Conversation History: {conversation}
+
+Your retrieved Thoughts: {thoughts}
+
+Current sentence sequence: {sequence}
+
+
+You are tasked to continue the next sentence of a characters spoken words given the DATA above. Only output the next single sentence. If the sentence sequence is empty, generate a initial sentence. Postpend "NULL" when the current sentence sequence sounds complete. Postpend "CONTINUE" if the current sentence sequence doesn't sound finished 
+Do not say anything else. Only say the response. Make sure output sounds human!
+
+Next sentence in sequence:

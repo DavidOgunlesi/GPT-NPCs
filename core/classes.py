@@ -120,42 +120,50 @@ class SpeechConstructionModule:
         self.speech_personality = speech_personality
 
     def ConstructResponse(self, queries, originalInput, previousSentences, conversation = []):
-        prompt =  f'''
-        INSTRUCTIONS:
-        You are roleplaying as a character. Given the information from your thoughts, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.        
-        Only construct the next sentence. Do not construct the entire response. Do this by predicting the next sentence from the previous sentences. If no previous sentences exist, construct the first sentence.
-        If your previous sentences make a complete answer/response, you should stop generating.
+        # prompt =  f'''
+        # INSTRUCTIONS:
+        # You are roleplaying as a character. Given the information from your thoughts, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.        
+        # Only construct the next sentence. Do not construct the entire response. Do this by predicting the next sentence from the previous sentences. If no previous sentences exist, construct the first sentence.
+        # If your previous sentences make a complete answer/response, you should stop generating.
 
-        Make it sound like a human.
-        Speech Personality: {self.speech_personality}
-        Do not say anything else. Only say the response. And only one sentence. Do not repeat things.
+        # Make it sound like a human.
+        # Speech Personality: {self.speech_personality}
+        # Do not say anything else. Only say the response. And only one sentence. Do not repeat things.
 
-        DATA:
-        Current Conversation History: {conversation}
-        Current Input to respond to: {originalInput}
-        Your Previous Sentences: {"".join(previousSentences)}
-        Your retrieved Thoughts: {queries}
+        # DATA:
+        # Current Conversation History: {conversation}
+        # Current Input to respond to: {originalInput}
+        # Your Previous Sentences: {"".join(previousSentences)}
+        # Your retrieved Thoughts: {queries}
 
-        EXAMPLE: 
-        Current Conversation History: ["role": "system", "content": "You are under arrest!"]
-        Current Input to respond to: "You are under arrest!"
-        Your Previous Sentences: Who are you? I don't recognise you around these parts.
-        Your retrieved Thoughts: ["Do I know this person?", "Are they new here?"]
-        Output Example: Are you new here? NULL.
+        # EXAMPLE: 
+        # Current Conversation History: ["role": "system", "content": "You are under arrest!"]
+        # Current Input to respond to: "You are under arrest!"
+        # Your Previous Sentences: Who are you? I don't recognise you around these parts.
+        # Your retrieved Thoughts: ["Do I know this person?", "Are they new here?"]
+        # Output Example: Are you new here? NULL.
 
-        When you are finished predicting sentences say "NULL".
-        '''
-        prompt=f'''
-        INSTRUCTIONS:
-        You are roleplaying as a character. Given the information from your thoughts, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.
-        Make it sound like a human.
-        Speech Personality: {self.speech_personality}
+        # When you are finished predicting sentences say "NULL".
+        # '''
+        # prompt=f'''
+        # INSTRUCTIONS:
+        # You are roleplaying as a character. Given the information from your thoughts, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.
+        # Make it sound like a human.
+        # Speech Personality: {self.speech_personality}
 
-        DATA:
-        Current Conversation History: {conversation}
+        # DATA:
+        # Current Conversation History: {conversation}
 
-        Your retrieved Thoughts: {queries}
-        '''
+        # Your retrieved Thoughts: {queries}
+        # '''
+        prompt = open("core/prompts/speech_construction.txt", "r").read()
+        prompt = prompt.format(
+            speech_personality= self.speech_personality, 
+            conversation=conversation, 
+            thoughts=queries,
+            sequence= ("".join(previousSentences).replace("\"", ""))
+            )
+        print("".join(previousSentences).replace("\"", ""))
         print("----------------------------------------")
         print(prompt)
         print("----------------------------------------")
@@ -247,9 +255,11 @@ class Character:
         fullText = ""
         maxSentences = 10
         while genCount < maxSentences:
+            print(prev_sentences)
             sres = s.ConstructResponse(results, inp_text, prev_sentences, conversation=self.conversation)
             #print(sres)
             speechText = sres.replace("NULL", "")
+            speechText = speechText.replace("CONTINUE", "")
             fullText += speechText
             print(f"Speech: {speechText}")
             prev_sentences += speechText
