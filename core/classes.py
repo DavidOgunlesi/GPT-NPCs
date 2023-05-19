@@ -119,7 +119,7 @@ class SpeechConstructionModule:
     def __init__(self, speech_personality) -> None:
         self.speech_personality = speech_personality
 
-    def ConstructResponse(self, queries, originalInput, previousSentences, conversation = []):
+    def ConstructResponse(self, initial_queries, originalInput, db, previousSentences, conversation = []):
         # prompt =  f'''
         # INSTRUCTIONS:
         # You are roleplaying as a character. Given the information from your thoughts, which have been retrieved from your thoughts, about you and/or the world, construct an in-character response to the original input.        
@@ -157,16 +157,29 @@ class SpeechConstructionModule:
         # Your retrieved Thoughts: {queries}
         # '''
         prompt = open("core/prompts/speech_construction.txt", "r").read()
+        previousSentencesString = "\n".join(previousSentences).replace('"', '')
+
+        # Think about that you are saying too
+        thoughts = initial_queries if len(previousSentences) == 0 else db.QueryDatabase(previousSentencesString) + initial_queries
+        thoughts = "\n".join(thoughts)
+
+        def CleanString(string):
+            return string.replace('"', '')
+        
+        convoString = "\n".join([f'{x["role"]}: "{CleanString(x["content"])}"' for i, x in enumerate(conversation)])
+        previousSentencesString = "\n".join([f'{CleanString(s)}' for i, s in enumerate(previousSentences)])
+
         prompt = prompt.format(
             speech_personality= self.speech_personality, 
-            conversation=conversation, 
-            thoughts=queries,
-            sequence= ("".join(previousSentences).replace("\"", ""))
+            conversation= convoString, 
+            thoughts= thoughts,
+            sequence= previousSentencesString,
+            current_input = originalInput
             )
-        print("".join(previousSentences).replace("\"", ""))
-        print("----------------------------------------")
-        print(prompt)
-        print("----------------------------------------")
+        #print("".join(previousSentences).replace("\"", ""))
+        #print("------------------------------------------------------------------------------------------------------------------------")
+        #print(prompt)
+        #print("------------------------------------------------------------------------------------------------------------------------")
         gpt = GPTInstance(prompt)
         return gpt.CreateChat(confirmString=None)
 
@@ -177,7 +190,7 @@ class SpeechToTextModule:
 
 class TextToSpeechModule:
     def Speak(self, text) -> None:
-        set_api_key(ELEVENLABS_KEY)
+        #set_api_key(ELEVENLABS_KEY)
 
         audio = generate(
         text=text,
@@ -188,15 +201,16 @@ class TextToSpeechModule:
         play(audio)
 
     def SpeakBytes(self, data) -> None:
-        set_api_key(ELEVENLABS_KEY)
+        #set_api_key(ELEVENLABS_KEY)
         play(data)
 
     def GenerateAudioBytes(self, text) -> bytes:
-        set_api_key(ELEVENLABS_KEY)
+        #set_api_key(ELEVENLABS_KEY)
 
         audio = generate(
         text=text,
-        voice="f5UejLGNKubShJkTy5UO",
+        #voice="f5UejLGNKubShJkTy5UO",
+        voice="Adam",
         model="eleven_monolingual_v1"
         )
         
@@ -234,7 +248,7 @@ class Character:
         #############################################
         tts = TextToSpeechModule()
         s = SpeechConstructionModule(char.speech_personality)
-        prev_sentences = ""
+        prev_sentences = []
         genCount = 0
 
         audioBytesBuffer = []
@@ -255,19 +269,19 @@ class Character:
         fullText = ""
         maxSentences = 10
         while genCount < maxSentences:
-            print(prev_sentences)
-            sres = s.ConstructResponse(results, inp_text, prev_sentences, conversation=self.conversation)
-            #print(sres)
+            #print(prev_sentences)
+            sres = s.ConstructResponse(results, inp_text, char, prev_sentences, conversation=self.conversation)
+            print(f"Response: {sres}")
             speechText = sres.replace("NULL", "")
             speechText = speechText.replace("CONTINUE", "")
             fullText += speechText
-            print(f"Speech: {speechText}")
-            prev_sentences += speechText
+            #print(f"Speech: {speechText}")
+            prev_sentences.append(sres)
             genbytes = tts.GenerateAudioBytes(speechText)
             audioBytesBuffer.append(genbytes)
             genCount += 1
-            #print(genCount)
             if "NULL" in sres:
+                print("NULL")
                 break
         
         while audio_playing or audioBytesBuffer != []:
